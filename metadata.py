@@ -6,11 +6,12 @@ import time
 
 class Metadata():
     def __init__(self,
+                 sheet,
                  keyfile = 'google_access.json',
-                 sheet = 'Logbook MEC L-10388', #None
                  worksheet = 0,
                  writesheet = 2,
-                 head = 2
+                 head = 2,
+                 cache_time = 10
                 ):
         
         self.debug = False
@@ -23,6 +24,7 @@ class Metadata():
         self._worksheet = worksheet
         self._writesheet = writesheet
         self._sheet = sheet
+        self._cache_time = cache_time
             
         #if worksheet != None and writesheet == None:
         self.set_worksheet(worksheet)
@@ -74,7 +76,7 @@ class Metadata():
                 #return None
 
     def update(self, verbose = True):
-        if time.time()-self._lastUpdate > 10:
+        if time.time()-self._lastUpdate > self._cache_time:
             try:
                 #read google spreadsheet, if already open:
                 # get all the records of the data
