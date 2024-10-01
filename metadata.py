@@ -13,44 +13,28 @@ class Metadata():
                  head = 2,
                  cache_time = 10
                 ):
-        
-        self.debug = False
-        
-        self._scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-                        
-        if keyfile != None:
-            self.set_keyfile(keyfile)
-
-        self._worksheet = worksheet
-        self._writesheet = writesheet
+        '''
+        Parameters:
+        * sheet: name of your gsheet file
+        * worksheet: number of the sheet woth the shot sheet
+        * writesheet: number of the sheet with the where to write data to
+        * head: number of header lines (the last two lines are expected to contain the unique key and unit strings, respectively)
+        * cache_time: time in seconds before retrieving new data from google after the last update
+        '''
         self._sheet = sheet
+        self._scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+        self._creds = ServiceAccountCredentials.from_json_keyfile_name(keyfile, self._scope)
         self._cache_time = cache_time
             
         #if worksheet != None and writesheet == None:
-        self.set_worksheet(worksheet)
+        self._set_worksheet(worksheet,writesheet)
 
-        if sheet != None:
-            self.set_sheet(sheet)
-
-
-        if head != None:
-            self.head = head
+        self._head = head
             
         self._lastUpdate = 0
         self.update()
-            
-    def set_head(self,head):
-        if self._head != head: self._read_again = True
-        self._head = head
 
-    def set_keyfile(self,keyfile):
-        self._creds = ServiceAccountCredentials.from_json_keyfile_name(keyfile, self._scope)
-        
-    def set_sheet(self,sheet):
-        self._sheet = sheet
-        self._get_sheet_instance()
-
-    def set_worksheet(self,worksheet, writesheet=None):
+    def _set_worksheet(self,worksheet, writesheet=None):
         self._worksheet = worksheet
         if writesheet != None:
             self._writesheet = writesheet
@@ -59,20 +43,20 @@ class Metadata():
     def _get_sheet_instance(self, verbose = True):
         retry_count = 0
         while retry_count < 5:
-            try:
+            #try:
                 # authorize the clientsheet 
-                client = gspread.authorize(self._creds)
-                # get the instance of the Spreadsheet
-                sheet = client.open(self._sheet)
-                # get the required sheet of the Spreadsheet
-                self._sheet_instance = sheet.get_worksheet(self._worksheet)
-                if self._writesheet != None:
-                    self._writesheet_instance = sheet.get_worksheet(self._writesheet)
-                return self._sheet_instance
-            except Exception as e:
-                retry_count += 1
-                if verbose: print("Error getting the google sheet instance!")
-                time.sleep(2)
+            client = gspread.authorize(self._creds)
+            # get the instance of the Spreadsheet
+            sheet = client.open(self._sheet)
+            # get the required sheet of the Spreadsheet
+            self._sheet_instance = sheet.get_worksheet(self._worksheet)
+            if self._writesheet != None:
+                self._writesheet_instance = sheet.get_worksheet(self._writesheet)
+            return self._sheet_instance
+            #except Exception as e:
+            #    retry_count += 1
+            #    if verbose: print("Error getting the google sheet instance!")
+            #    time.sleep(2)
                 #return None
 
     def update(self, verbose = True):
@@ -80,11 +64,11 @@ class Metadata():
             try:
                 #read google spreadsheet, if already open:
                 # get all the records of the data
-                records_data = self._sheet_instance.get_all_records(head=self.head)#[2:]
+                records_data = self._sheet_instance.get_all_records(head=self._head)#[2:]
                 records_data_write = self._writesheet_instance.get_all_records(head=1)#[2:]
             except Exception as e:
                 # else open the spreadsheet first
-                records_data = self._get_sheet_instance().get_all_records(head=self.head)#[2:]
+                records_data = self._get_sheet_instance().get_all_records(head=self._head)#[2:]
                 records_data_write = self._writesheet_instance.get_all_records(head=1)#[2:]
             # convert the json to dataframe
 
