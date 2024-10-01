@@ -8,5 +8,5 @@ To get started, you need to
 * create a google sheet and share it with the service account
 
 # Usage
-* The file ```metadata.ipynb``` provides a simple demo to get started.
+* The file ```gshotsheet2py.ipynb``` provides a simple demo to get started.
 * For more information read the doc-strings (shift-tab in jupyter notebook inside the function brackets)
