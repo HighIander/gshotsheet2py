@@ -43,20 +43,22 @@ class Metadata():
     def _get_sheet_instance(self, verbose = True):
         retry_count = 0
         while retry_count < 5:
-            #try:
+            try:
                 # authorize the clientsheet 
-            client = gspread.authorize(self._creds)
-            # get the instance of the Spreadsheet
-            sheet = client.open(self._sheet)
-            # get the required sheet of the Spreadsheet
-            self._sheet_instance = sheet.get_worksheet(self._worksheet)
-            if self._writesheet != None:
-                self._writesheet_instance = sheet.get_worksheet(self._writesheet)
-            return self._sheet_instance
-            #except Exception as e:
-            #    retry_count += 1
-            #    if verbose: print("Error getting the google sheet instance!")
-            #    time.sleep(2)
+                client = gspread.authorize(self._creds)
+                # get the instance of the Spreadsheet
+                sheet = client.open(self._sheet)
+                # get the required sheet of the Spreadsheet
+                self._sheet_instance = sheet.get_worksheet(self._worksheet)
+                if self._writesheet != None:
+                    self._writesheet_instance = sheet.get_worksheet(self._writesheet)
+                return self._sheet_instance
+            except Exception as e:
+                retry_count += 1
+                if verbose: 
+                    print("Error getting the google sheet instance!")
+                    if retry_count < 4: print("   will retry...")
+                time.sleep(2)
                 #return None
 
     def update(self, verbose = True):
