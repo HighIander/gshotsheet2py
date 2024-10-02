@@ -362,59 +362,80 @@ class Shotsheet():
                 exact_datetime = pd.to_datetime(value)
                 df = df[df['DateTime'] == exact_datetime]
 
-        # Apply other filters if provided
-        for key, value in filter.items():
-            if key == "Time" and key != "DateTime":
-                # Apply time filter for 'Time' column
-                if isinstance(value, slice):
-                    # Range filter for time
-                    df = df[(df['Time'] >= value.start) & (df['Time'] < value.stop)]
-                elif isinstance(value, list):
-                    # Exact match for a list of times
-                    exact_times = [pd.to_datetime(t, format='%H:%M').time() for t in value]
-                    df = df[df['Time'].isin(exact_times)]
-                else:
-                    # Exact match for a single time value
-                    exact_time = pd.to_datetime(value, format='%H:%M').time()
-                    df = df[df['Time'] == exact_time]
-
-            elif key == "Date" and key != "DateTime":
-                # Apply date filter for 'Date' column
-                if isinstance(value, slice):
-                    # Range filter for date
-                    df = df[(df['Date'] >= value.start) & (df['Date'] <= value.stop)]
-                elif isinstance(value, list):
-                    # Exact match for a list of dates
-                    exact_dates = [pd.to_datetime(d, format='%m/%d/%Y') for d in value]
-                    df = df[df['Date'].isin(exact_dates)]
-                else:
-                    # Exact match for a single date value
-                    exact_date = pd.to_datetime(value, format='%m/%d/%Y')
-                    df = df[df['Date'] == exact_date]
-
-            else:
-                # General filter for other columns
-                if key != "DateTime":
-                    if isinstance(value, slice):
-                        # Range filter for general key
-                        df = df[(df[key] >= value.start) & (df[key] <= value.stop)]
-                    elif isinstance(value, list):
-                        # Exact match for a list of values
-                        df = df[df[key].isin(value)]
-                    else:
-                        # Exact match for a single value
-                        df = df[df[key] == value]
-
-        # Sort the data if a sorting key is provided
-        if sort:
-            df = df.sort_values(by=sort)
-
-        # Build the final data dictionary
         data = {}
-        for r in df["run_number"]:
-            run_data = {}
-            for record in df:
-                run_data[record] = self.get(record, r, python=python, verbose=verbose)
-            data[r] = run_data
+        try:
+            # Apply other filters if provided
+            for key, value in filter.items():
+                if key == "Time" and key != "DateTime":
+                    # Apply time filter for 'Time' column
+                    if isinstance(value, slice):
+                        # Range filter for time
+                        df = df[(df['Time'] >= value.start) & (df['Time'] < value.stop)]
+                    elif isinstance(value, list):
+                        # Exact match for a list of times
+                        exact_times = [pd.to_datetime(t, format='%H:%M').time() for t in value]
+                        df = df[df['Time'].isin(exact_times)]
+                    else:
+                        # Exact match for a single time value
+                        exact_time = pd.to_datetime(value, format='%H:%M').time()
+                        df = df[df['Time'] == exact_time]
+
+                elif key == "Date" and key != "DateTime":
+                    # Apply date filter for 'Date' column
+                    if isinstance(value, slice):
+                        # Range filter for date
+                        df = df[(df['Date'] >= value.start) & (df['Date'] <= value.stop)]
+                    elif isinstance(value, list):
+                        # Exact match for a list of dates
+                        exact_dates = [pd.to_datetime(d, format='%m/%d/%Y') for d in value]
+                        df = df[df['Date'].isin(exact_dates)]
+                    else:
+                        # Exact match for a single date value
+                        exact_date = pd.to_datetime(value, format='%m/%d/%Y')
+                        df = df[df['Date'] == exact_date]
+
+                else:
+                    # General filter for other columns
+                    if key != "DateTime":
+                        if isinstance(value, slice):
+                            # Range filter for general key
+                            df = df[(df[key] >= value.start) & (df[key] <= value.stop)]
+                        elif isinstance(value, list):
+                            # Exact match for a list of values
+                            df = df[df[key].isin(value)]
+                        else:
+                            # Exact match for a single value
+                            df = df[df[key] == value]
+
+            # Sort the data if a sorting key is provided
+            if sort:
+                df = df.sort_values(by=sort)
+
+            # Build the final data dictionary
+            for r in df["run_number"]:
+                run_data = {}
+                for record in df:
+                    if record != "run_number":
+                        run_data[record] = self.get(record, r, python=python, verbose=verbose)
+                    else:
+                        run_data[record] = r
+                data[r] = run_data
+        except:
+            if data == {}:
+                for item in filter.items():
+                    if item[0] == "run_number":
+                        value = filter["run_number"]
+                        if isinstance(value, slice):
+                            # Range filter for general key
+                            run_numbers = np.arange(value.start,value.end)
+                            for run_number in run_numbers:
+                                data[run_number] = {"Warning:": "No metadata"}
+                        elif isinstance(value, list):
+                            # Exact match for a list of values
+                            for run_number in value:
+                                data[run_number] = {"Warning:": "No metadata"}
+                        else:
+                            # Exact match for a single value
+                            data[value] = {"Warning:": "No metadata"}
 
         return data
